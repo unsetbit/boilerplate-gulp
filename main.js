@@ -45,8 +45,8 @@ module.exports = function(gulp, options){
     distDir = './dist',
     devDir = './dev',
     reportsDir = './reports',
-    jsMain = options.jsMain || './src/js/main.js',
-    cssMain = options.cssMain || './less/css/main.css';
+    jsMain = options.jsMain || jsSrcDir + '/' + name + '.js',
+    cssMain = options.cssMain || cssSrcDir + '/' + name + '.css';
 
   if(pkg.directories){
     if(pkg.directories.buildDir) buildDir = pkg.directories.build;
@@ -59,13 +59,13 @@ module.exports = function(gulp, options){
     if(pkg.directories.jsSrcDir){
       jsSrcDir = pkg.directories.jsSrc;
 
-      if(!options.jsMain && !pkg.main) jsMain = jsSrcDir + '/main.js';
+      if(!options.jsMain && !pkg.main) jsMain = jsSrcDir + '/' + name + '.js';
     }
 
     if(pkg.directories.cssSrcDir){
       cssSrcDir = pkg.directories.cssSrc;
 
-      if(!options.cssMain) cssMain = cssSrcDir + '/main.css';
+      if(!options.cssMain) cssMain = cssSrcDir + '/' + name + '.css';
     }
   }
 
@@ -95,7 +95,8 @@ module.exports = function(gulp, options){
   });
 
   // Incrementally build JavaScript and CSS files as they're modified and then
-  // execute testing and linting tasks. Also starts a server on port 3000
+  // execute testing and linting tasks. Also starts a connect server which
+  // reloads connected browsers whenever example or build dir changes contents.
   gulp.task('dev', ['example'], function() {
     gulp.watch([
       jsSrcDir + '/**/*.js',
@@ -132,26 +133,26 @@ module.exports = function(gulp, options){
   //*************************//
   // JavaScript Bundler Tasks //
   //*************************//
-  // Generates a JavaScript bundle of src/js/main.js and its dependencies using
+  // Generates a JavaScript bundle of jsMain and its dependencies using
   // browserify in the build directory with an embedded sourcemap.
   gulp.task('js', ['clean-js'], function() {
     return browserify(jsMain)
       .bundle({
         debug: true,
-        standalone: pkg.name
+        standalone: name
       }) // Debug enables source maps
       .pipe(source(path.basename(jsMain))) // gulpifies the browserify stream
-      .pipe(rename(pkg.name + '.js'))
+      .pipe(rename(name + '.js'))
       .pipe(gulp.dest(buildDir));
   });
 
   // Generates a minified JavaScript bundle in the build directory with an
   // accompanying source map file.
   gulp.task('js-min', ['js'], function() {
-    return gulp.src(buildDir + '/' + pkg.name + '.js')
+    return gulp.src(buildDir + '/' + name + '.js')
       .pipe(sourcemaps.init())
       .pipe(uglify())
-      .pipe(rename(pkg.name + '.min.js'))
+      .pipe(rename(name + '.min.js'))
       .pipe(sourcemaps.write('./'))
       .pipe(gulp.dest(buildDir));
   });
@@ -172,13 +173,13 @@ module.exports = function(gulp, options){
     del([buildDir + '/**/*.css{,map}'], cb);
   });
 
-  // Generates a CSS bundle of src/css/main.less and its dependencies using LESS
+  // Generates a CSS bundle of cssMain and its dependencies using LESS
   // in the build directory with an embedded source map.
   gulp.task('css', ['clean-css'], function() {
     return gulp.src(cssMain)
       .pipe(sourcemaps.init())
       .pipe(less())
-      .pipe(rename(pkg.name + '.css'))
+      .pipe(rename(name + '.css'))
       .pipe(sourcemaps.write())
       .pipe(gulp.dest(buildDir));
   });
@@ -186,8 +187,8 @@ module.exports = function(gulp, options){
   // Generates a minified CSS bundle in the build directory with an accompanying
   // source map.
   gulp.task('css-min', ['css'], function() {
-    return gulp.src(buildDir + '/' + pkg.name + '.css')
-      .pipe(rename(pkg.name + '.min.css'))
+    return gulp.src(buildDir + '/' + name + '.css')
+      .pipe(rename(name + '.min.css'))
       .pipe(sourcemaps.init())
       .pipe(csso())
       .pipe(sourcemaps.write('./'))
@@ -200,7 +201,7 @@ module.exports = function(gulp, options){
   //*******************//
 
   // Run tests found in ./test/ against the JavaScript source files using karma
-  // with the configuration defined in ./dev/config/karma.js.
+  // with the configuration defined in karmaConfig.
   gulp.task('test', function(done) {
     karma.start(_.assign(
       {},
@@ -246,12 +247,18 @@ module.exports = function(gulp, options){
       ])
       .pipe(es.map(function(file, cb) {
         try {
-          file.contents = new Buffer(beautify(String(file.contents), jsBeautifyConfig));
+          file.contents = new Buffer(
+            beautify(String(file.contents), jsBeautifyConfig)
+          );
           fs.writeFile(file.path, file.contents, function() {
             cb(null, file);
           });
         } catch (err) {
-          return cb(new gutil.PluginError('fix-style', err, jsBeautifyConfig));
+          return cb(new gutil.PluginError(
+            'fix-style', 
+            err, 
+            jsBeautifyConfig
+          ));
         }
       }));
   });

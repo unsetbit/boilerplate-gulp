@@ -32,8 +32,8 @@ gulp fix-style
 ```
 
 # Use
-Install by executing `npm install --save-dev boilerplate-gulp`. Then in 
-your `gulpfile.js`:
+Install by executing `npm install --save-dev boilerplate-gulp`. Then modify
+your `gulpfile.js` (or create one):
 
 ```javascript
 var gulp = require('gulp'), 
@@ -52,17 +52,19 @@ boilerplate(gulp, {
   recessConfig: {} // passed to gulp-recess's recess()
 });
 
-// Rest of your gulp file, potentially overwriting the boiler plate tasks...
+// Rest of your gulp file, potentially overwriting the boilerplate tasks...
 ```
 
-# Directories
+# Default Filesystem Structure
 
 * dist/ - The distributable files for this package, updated when `gulp` is run
 * build/ - The build directory used by gulp during builds.
-* dev/ - Development related files (such as custom tasks or configuration)
+* dev/ - Development related files (such as custom tasks or configuration).
 * example/ - The root directory served during `gulp dev`.
 * src/js/ - CommonJS modules which describe the JS source of the package.
+* src/js/[PACKAGE_NAME].js - Entry-point for browserify.
 * src/css/ - LESS files which describe the CSS source of the package.
+* src/css/[PACKAGE_NAME].less - Entry-point for less.
 * reports/ - Coverage an static analysis reports.
 
 All of these directories are configurable via your package.json's directory
