@@ -1,8 +1,13 @@
-# Boilerplate gulp tasks for client-side packages
+# Boilerplate gulp
 
-Assigns a bunch of common tasks to gulp, enforces some opinion on code
-architecture, but is configurable. Intended for individual modules rather than
-full applications (containing multiple modules).
+Assigns a common tasks to gulp for managing client-side modules, such
+as: incremental builds, LESS processor, CommonJS bundler (browserify), 
+development server with auto reloading, CSS and JavaScript linting, 
+cross-browser unit testing, test coverage reporting, and style fixer.
+
+By default the tasks enforce some opinion on code structure, but it's all
+configurable. This is intended for individual modules rather than largers 
+applications (with multiple generated modules).
 
 # Tasks
 ```sh
