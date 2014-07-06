@@ -80,7 +80,7 @@ boilerplate(gulp, {
 
   // The following are optional
   jsMain: pkg.main, // Entry point for browserify
-  cssMain: 'src/css/main.less', // Entry point for LESS
+  cssMain: 'src/css/[PACKAGE_NAME].less', // Entry point for LESS
   connectConfig: {}, // passed into gulp-connect's connect.server()
   karmaConfig: {}, // passed to karma's karma.start()
   jsHintConfig: {}, // passed to gulp-jshint's jshint()
