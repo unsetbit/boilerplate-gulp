@@ -1,6 +1,6 @@
 {
   "name": "boilerplate-gulp",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Boilerplate gulp tasks for client side packages",
   "keywords": [
     "gulp", 
@@ -14,7 +14,7 @@
     "istanbul"
   ],
   "main": "main.js",
-  "devDependencies": {
+  "dependencies": {
     "vinyl-source-stream": "^0.1.1",
     "gulp-streamify": "0.0.5",
     "gulp-uglify": "^0.3.1",

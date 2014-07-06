@@ -19,11 +19,11 @@ var source = require('vinyl-source-stream'),
   connect = require('gulp-connect'),
   watch = require('gulp-watch'),
   path = require('path'),
-  jsStylish = require('jshint-stylish'),
-  gulp = require('gulp');
+  jsStylish = require('jshint-stylish');
 
 var defaultJSBeautifyConfig = require('./defaultJSBeautifyConfig'),
   defaultJSHintConfig = require('./defaultJSHintConfig'),
+  defaultConnectConfig = require('./defaultConnectConfig'),
   defaultKarmaConfig = require('./defaultKarmaConfig'),
   defaultRecessConfig = require('./defaultRecessConfig');
 
@@ -46,7 +46,7 @@ module.exports = function(gulp, options){
     devDir = './dev',
     reportsDir = './reports',
     jsMain = options.jsMain || jsSrcDir + '/' + name + '.js',
-    cssMain = options.cssMain || cssSrcDir + '/' + name + '.css';
+    cssMain = options.cssMain || cssSrcDir + '/' + name + '.less';
 
   if(pkg.directories){
     if(pkg.directories.buildDir) buildDir = pkg.directories.build;
@@ -65,7 +65,7 @@ module.exports = function(gulp, options){
     if(pkg.directories.cssSrcDir){
       cssSrcDir = pkg.directories.cssSrc;
 
-      if(!options.cssMain) cssMain = cssSrcDir + '/' + name + '.css';
+      if(!options.cssMain) cssMain = cssSrcDir + '/' + name + '.less';
     }
   }
 
@@ -118,7 +118,7 @@ module.exports = function(gulp, options){
     connect.server(connectConfig);
 
     watch({
-      glob: connectConfig.root
+      glob: connectConfig.root.map(function(dir){ return dir + '/**/*'; })
     }).pipe(connect.reload());
   });
 
