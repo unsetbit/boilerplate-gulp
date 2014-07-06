@@ -13,6 +13,7 @@ var source = require('vinyl-source-stream'),
   recess = require('gulp-recess'),
   karma = require('karma').server,
   _ = require('lodash'),
+  plato = require('gulp-plato'),
   gutil = require('gulp-util'),
   es = require('event-stream'),
   fs = require('fs'),
@@ -125,7 +126,8 @@ module.exports = function(gulp, options){
 
   // Creates a clean, full build with testing, linting, reporting and
   // minification then copies the results to the dist folder.
-  gulp.task('dist', ['clean', 'test', 'lint', 'build-min'], function() {
+  gulp.task('dist', ['clean', 'test', 'lint', 'report', 'build-min'], 
+    function() {
     return gulp.src(buildDir + '/**/*')
       .pipe(gulp.dest(distDir));
   });
@@ -200,6 +202,9 @@ module.exports = function(gulp, options){
   // Quality Ensurance //
   //*******************//
 
+  // Generates test coverage and code maintainabilty reports.
+  gulp.task('report', ['test', 'plato']);
+
   // Run tests found in ./test/ against the JavaScript source files using karma
   // with the configuration defined in karmaConfig.
   gulp.task('test', function(done) {
@@ -208,6 +213,18 @@ module.exports = function(gulp, options){
       karmaConfig, 
       { singleRun: true }
     ), done);
+  });
+
+  // Generates a maintainability report using Plato.
+  gulp.task('plato', function(){
+    return gulp.src([
+      jsSrcDir + '/**/*.js',
+      '!' + jsSrcDir + '/**/*Spec.js' // exclude tests
+    ]).pipe(plato('reports/plato', { 
+        jshint: {
+          options: jsHintConfig
+        }
+      }));
   });
 
   // Runs the JavaScript sources files through JSHint according to the options

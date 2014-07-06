@@ -1,9 +1,9 @@
 {
   "name": "boilerplate-gulp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Boilerplate gulp tasks for client side packages",
   "keywords": [
-    "gulp", 
+    "gulp",
     "boilerplate",
     "less",
     "browserify",
@@ -40,7 +40,8 @@
     "gulp-connect": "^2.0.5",
     "gulp-watch": "^0.6.8",
     "gulp-util": "^2.2.19",
-    "karma-commonjs": "0.0.10"
+    "karma-commonjs": "0.0.10",
+    "gulp-plato": "^0.2.1"
   },
   "scripts": {
     "test": "exit 1"
