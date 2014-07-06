@@ -1,6 +1,6 @@
 # Boilerplate gulp
 
-Wires up these technologies to [gulp](http://gulpjs.com/) so you don't have to:
+Wires up these technologies to [gulp](http://gulpjs.com/):
 * [browserify](http://browserify.org/) - Bundles CommonJS modules for use in 
 browsers
 * [less](http://lesscss.org/) - CSS preprocessor
