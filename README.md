@@ -101,7 +101,9 @@ boilerplate(gulp, {
 * src/js/[PACKAGE_NAME].js - Entry-point for browserify.
 * src/css/ - LESS files which describe the CSS source of the package.
 * src/css/[PACKAGE_NAME].less - Entry-point for less.
-* reports/ - Coverage an static analysis reports.
+* reports/ - Reports generated about the source code.
+* reports/coverage - Test coverage reporting.
+* reports/plato - Complexity and maintainability reporting.
 
 All of these directories are configurable via your package.json's directory
 parameter, like so:
