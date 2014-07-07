@@ -79,6 +79,7 @@ boilerplate(gulp, {
   pkg: require('./package.json'),
 
   // The following are optional
+  disableCss: false, // Disables all CSS build paths for JS-only projects
   jsMain: pkg.main, // Entry point for browserify
   cssMain: 'src/css/[PACKAGE_NAME].less', // Entry point for LESS
   connectConfig: {}, // passed into gulp-connect's connect.server()
