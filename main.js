@@ -238,16 +238,14 @@ module.exports = function(gulp, options){
 
   // Generates a maintainability report using Plato.
   gulp.task('plato', ['clean-reports'], function(done){
-    gulp.src([
+    return gulp.src([
       jsSrcDir + '/**/*.js',
       '!' + jsSrcDir + '/**/*Spec.js' // exclude tests
     ]).pipe(plato('reports/plato', { 
         jshint: {
           options: jsHintConfig
         }
-      })).on('finish', function(){
-      console.log('DOONNEE'); done();
-    });
+      }));
   });
 
   // Runs the JavaScript sources files through JSHint according to the options
