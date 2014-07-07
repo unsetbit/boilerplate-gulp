@@ -46,8 +46,12 @@ module.exports = function(gulp, options){
     distDir = './dist',
     devDir = './dev',
     reportsDir = './reports',
-    jsMain = options.jsMain || jsSrcDir + '/' + name + '.js',
-    cssMain = options.cssMain || cssSrcDir + '/' + name + '.less';
+    jsMain = jsSrcDir + '/' + name + '.js',
+    cssMain = cssSrcDir + '/' + name + '.less',
+    cssDisabled = !!options.disableCss;
+
+  if(options.jsMain !== undefined) jsMain = options.jsMain;
+  if(options.cssMain !== undefined) cssMain = options.cssMain;
 
   if(pkg.directories){
     if(pkg.directories.buildDir) buildDir = pkg.directories.build;
@@ -57,13 +61,13 @@ module.exports = function(gulp, options){
 
     if(!options.jsMain && pkg.main) jsMain = pkg.main;
     
-    if(pkg.directories.jsSrcDir){
+    if(pkg.directories.jsSrcDir !== undefined){
       jsSrcDir = pkg.directories.jsSrc;
 
       if(!options.jsMain && !pkg.main) jsMain = jsSrcDir + '/' + name + '.js';
     }
 
-    if(pkg.directories.cssSrcDir){
+    if(pkg.directories.cssSrcDir !== undefined){
       cssSrcDir = pkg.directories.cssSrc;
 
       if(!options.cssMain) cssMain = cssSrcDir + '/' + name + '.less';
@@ -80,19 +84,34 @@ module.exports = function(gulp, options){
 
   // Builds an uniminfied version of the CSS and JavaScript files with embedded
   // source maps.
-  gulp.task('build', ['css', 'js']);
+  var buildTasks = ['js'];
+  if(!cssDisabled) buildTasks.push('css');
+  gulp.task('build', buildTasks);
 
   // Builds minified versions of the CSS and JavaScript files with external
   // source maps.
-  gulp.task('build-min', ['css-min', 'js-min']);
+  var buildMinTasks = ['js-min'];
+  if(!cssDisabled) buildTasks.push('css-min');
+  
+  gulp.task('build-min', buildMinTasks);
 
 
   //*******************//
   // Development Tasks //
   //*******************//
   // Wipe out all generated files which are generated via build tasks.
-  gulp.task('clean', function(done) {
-    del([buildDir, reportsDir, distDir], done);
+  gulp.task('clean', ['clean-reports', 'clean-dist', 'clean-build']);
+
+  gulp.task('clean-reports', function(done){
+    del([reportsDir], done);
+  });
+
+  gulp.task('clean-dist', function(done){
+    del([distDir], done);
+  });
+
+  gulp.task('clean-build', function(done){
+    del([buildDir], done);
   });
 
   // Incrementally build JavaScript and CSS files as they're modified and then
@@ -110,9 +129,11 @@ module.exports = function(gulp, options){
       'gulpfile.js'
     ], ['js-lint']);
 
-    gulp.watch(cssSrcDir + '/**/*.js', ['css', 'lint-css']);
-
     karma.start(karmaConfig);
+
+    if(!cssDisabled){
+      gulp.watch(cssSrcDir + '/**/*.js', ['css', 'lint-css']);
+    }
   });
 
   gulp.task('example', function() {
@@ -216,21 +237,25 @@ module.exports = function(gulp, options){
   });
 
   // Generates a maintainability report using Plato.
-  gulp.task('plato', function(){
-    return gulp.src([
+  gulp.task('plato', ['clean-reports'], function(done){
+    gulp.src([
       jsSrcDir + '/**/*.js',
       '!' + jsSrcDir + '/**/*Spec.js' // exclude tests
     ]).pipe(plato('reports/plato', { 
         jshint: {
           options: jsHintConfig
         }
-      }));
+      })).on('finish', function(){
+      console.log('DOONNEE'); done();
+    });
   });
 
   // Runs the JavaScript sources files through JSHint according to the options
   // set in jsHintConfig, and the CSS source files through Recess according to
   // the options set in recessConfig.
-  gulp.task('lint', ['js-lint', 'css-lint']);
+  var lintTasks = ['js-lint'];
+  if(!cssDisabled) lintTasks.push('css-lint');
+  gulp.task('lint', lintTasks);
 
   // Runs the JavaScript source files via JSHint according to the options set in
   // jsHintConfig.
