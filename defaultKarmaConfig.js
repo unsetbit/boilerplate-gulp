@@ -11,10 +11,10 @@ module.exports = {
   ],
 
   preprocessors: {
-    '**/src/js/**/*.js': ['coverage', 'commonjs']
+    '**/src/js/**/*.js': ['commonjs']
   },
 
-  reporters: ['progress', 'coverage'],
+  reporters: ['progress'],
 
   coverageReporter: {
     type: 'html',

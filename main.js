@@ -229,10 +229,20 @@ module.exports = function(gulp, options){
   // Run tests found in ./test/ against the JavaScript source files using karma
   // with the configuration defined in karmaConfig.
   gulp.task('test', function(done) {
+    var preprocessors = karmaConfig.preprocessors || [],
+      reporters = karmaConfig.reporters = [];
+
+    preprocessors.push('coverage');
+    reporters.push('coverage');
+
     karma.start(_.assign(
       {},
       karmaConfig, 
-      { singleRun: true }
+      { 
+        singleRun: true,
+        preprocessors: preprocessors,
+        reporters: reporters
+      }
     ), done);
   });
 

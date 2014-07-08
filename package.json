@@ -54,15 +54,18 @@
   "licenses": [
     {
       "type": "Apache License 2.0",
-      "url": "https://github.com/boilerplate-gulp/blob/master/LICENSE-APACHE2"
+      "url": "https://github.com/oztu/boilerplate-gulp/blob/master/LICENSE-APACHE2"
     }
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/boilerplate-gulp.git"
+    "url": "git://github.com/oztu/boilerplate-gulp.git"
   },
   "bugs": {
-    "url": "https://github.com/boilerplate-gulp/issues"
+    "url": "https://github.com/oztu/boilerplate-gulp/issues"
   },
-  "homepage": "https://github.com/boilerplate-gulp"
+  "homepage": "https://github.com/oztu/boilerplate-gulp",
+  "devDependencies": {
+    "karma-chrome-launcher": "^0.1.4"
+  }
 }
