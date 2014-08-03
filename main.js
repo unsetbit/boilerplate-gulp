@@ -61,19 +61,21 @@ module.exports = function(gulp, options){
 
     if(!options.jsMain && pkg.main) jsMain = pkg.main;
     
-    if(pkg.directories.jsSrcDir !== undefined){
+    if(pkg.directories.jsSrc !== undefined){
       jsSrcDir = pkg.directories.jsSrc;
 
       if(!options.jsMain && !pkg.main) jsMain = jsSrcDir + '/' + name + '.js';
     }
 
-    if(pkg.directories.cssSrcDir !== undefined){
+    if(pkg.directories.cssSrc !== undefined){
       cssSrcDir = pkg.directories.cssSrc;
 
       if(!options.cssMain) cssMain = cssSrcDir + '/' + name + '.less';
     }
   }
 
+  var linterFailsBuild = true;
+    
   //*******************//
   // Convenience Tasks //
   //*******************//
@@ -118,6 +120,8 @@ module.exports = function(gulp, options){
   // execute testing and linting tasks. Also starts a connect server which
   // reloads connected browsers whenever example or build dir changes contents.
   gulp.task('dev', ['example'], function() {
+    linterFailsBuild = false;
+    
     gulp.watch([
       jsSrcDir + '/**/*.js',
       '!' + jsSrcDir + '/**/*Spec.js'
@@ -129,14 +133,14 @@ module.exports = function(gulp, options){
       'gulpfile.js'
     ], ['js-lint']);
 
-    karma.start(karmaConfig);
-
     if(!cssDisabled){
       gulp.watch(cssSrcDir + '/**/*.js', ['css', 'lint-css']);
     }
+
+    karma.start(karmaConfig);
   });
 
-  gulp.task('example', function() {
+  gulp.task('example', ['build'], function() {
     connect.server(connectConfig);
 
     watch({
@@ -270,14 +274,19 @@ module.exports = function(gulp, options){
   gulp.task('js-lint', function() {
     var config = jsHintConfig;
 
-    return gulp.src([
+    var pipe = gulp.src([
         jsSrcDir + '/**/*.js',
         devDir + '/**/*.js',
         'gulpfile.js'
       ])
       .pipe(jshint(jsHintConfig))
-      .pipe(jshint.reporter(jsStylish))
-      .pipe(jshint.reporter('fail'));
+      .pipe(jshint.reporter(jsStylish));
+
+    if (linterFailsBuild){
+      pipe = pipe.pipe(jshint.reporter('fail'));
+    }
+
+    return pipe;
   });
 
   // Runs the LESS source files via recess according to the options set in
