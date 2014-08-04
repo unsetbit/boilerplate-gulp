@@ -23,9 +23,6 @@ module.exports = {
   // Enforce tab width of 2 spaces.
   indent: 2,
 
-  // Prohibit use of a variable before it is defined.
-  latedef: true,
-
   // Require capitalized names for constructor functions.
   newcap: true,
 
@@ -45,8 +42,8 @@ module.exports = {
   // Warn when variables are defined but never used.
   unused: true,
 
-  // Enforce line length to 80 characters
-  maxlen: 80,
+  // Enforce line length to 120 characters
+  maxlen: 120,
 
   // Enforce placing 'use strict' at the top function scope
   strict: true,
@@ -56,12 +53,15 @@ module.exports = {
    * RELAXING OPTIONS
    * ================
    */
+  // Prohibit use of a variable before it is defined.
+  latedef: false,
 
   // Suppress warnings about == null comparisons.
   eqnull: true,
 
   globals: {
     // Jasmine Globals
+    jasmine: true,
     beforeEach: true,
     afterEach: true,
     describe: true,
