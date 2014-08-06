@@ -1,6 +1,6 @@
 {
   "name": "boilerplate-gulp",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Boilerplate gulp tasks for client side packages",
   "keywords": [
     "gulp",

@@ -234,25 +234,26 @@ module.exports = function(gulp, options){
   // with the configuration defined in karmaConfig.
   gulp.task('test', function(done) {
     var preprocessors = karmaConfig.preprocessors || {},
-      reporters = karmaConfig.reporters = [];
+      reporters = karmaConfig.reporters || [];
 
-    Object.keys(preprocessors).forEach(function(preprocessor){
-      var preprocessor = preprocessors[preprocessor];
-      if (preprocessor.indexOf('coverage') !== -1) return;
-      preprocessor.push('coverage');
+    Object.keys(preprocessors).forEach(function(key){
+      preprocessors[key].push('coverage');
     });
-    
+
     reporters.push('coverage');
 
-    karma.start(_.assign(
+    var config = _.assign(
       {},
       karmaConfig, 
       { 
         singleRun: true,
+        autoWatch: false,
         preprocessors: preprocessors,
         reporters: reporters
       }
-    ), done);
+    );
+
+    karma.start(config, done);
   });
 
   // Generates a maintainability report using Plato.
