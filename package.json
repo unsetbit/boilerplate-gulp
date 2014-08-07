@@ -1,6 +1,6 @@
 {
   "name": "boilerplate-gulp",
-  "version": "0.1.9",
+  "version": "0.2.0",
   "description": "Boilerplate gulp tasks for client side packages",
   "keywords": [
     "gulp",
@@ -8,7 +8,7 @@
     "less",
     "browserify",
     "connect",
-    "karma",
+    "jasmine",
     "jshint",
     "recess",
     "istanbul"
@@ -25,13 +25,8 @@
     "gulp-rename": "^1.2.0",
     "gulp-less": "^1.3.1",
     "gulp-jshint": "^1.6.4",
-    "karma": "^0.12.16",
     "lodash": "^2.4.1",
-    "karma-jasmine": "^0.2.2",
-    "karma-phantomjs-launcher": "^0.1.4",
-    "karma-coverage": "^0.2.4",
-    "karma-browserify": "^0.2.1",
-    "gulp-istanbul": "^0.2.0",
+    "gulp-istanbul": "^0.2.1",
     "gulp-recess": "^0.3.1",
     "gulp-csso": "^0.2.9",
     "jshint-stylish": "^0.2.0",
@@ -40,8 +35,9 @@
     "gulp-connect": "^2.0.5",
     "gulp-watch": "^0.6.8",
     "gulp-util": "^2.2.19",
-    "karma-commonjs": "0.0.10",
-    "gulp-plato": "^0.2.1"
+    "gulp-plato": "^0.2.1",
+    "gulp-jasmine": "^0.3.0",
+    "jasmine-reporters": "^2.0.3"
   },
   "scripts": {
     "test": "exit 1"
@@ -64,8 +60,5 @@
   "bugs": {
     "url": "https://github.com/oztu/boilerplate-gulp/issues"
   },
-  "homepage": "https://github.com/oztu/boilerplate-gulp",
-  "devDependencies": {
-    "karma-chrome-launcher": "^0.1.4"
-  }
+  "homepage": "https://github.com/oztu/boilerplate-gulp"
 }

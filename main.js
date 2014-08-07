@@ -11,7 +11,12 @@ var source = require('vinyl-source-stream'),
   beautify = require('js-beautify'),
   del = require('del'),
   recess = require('gulp-recess'),
-  karma = require('karma').server,
+  
+  jasmine = require('gulp-jasmine'),
+  istanbul = require('gulp-istanbul'),
+  
+  jasmineReporters = require('jasmine-reporters'),
+
   _ = require('lodash'),
   plato = require('gulp-plato'),
   gutil = require('gulp-util'),
@@ -25,7 +30,6 @@ var source = require('vinyl-source-stream'),
 var defaultJSBeautifyConfig = require('./defaultJSBeautifyConfig'),
   defaultJSHintConfig = require('./defaultJSHintConfig'),
   defaultConnectConfig = require('./defaultConnectConfig'),
-  defaultKarmaConfig = require('./defaultKarmaConfig'),
   defaultRecessConfig = require('./defaultRecessConfig');
 
 module.exports = function(gulp, options){
@@ -33,15 +37,14 @@ module.exports = function(gulp, options){
 
   // Generate configuration by taking defaults and applying the optional overrides
   // on top of them.
-  var karmaConfig = _.assign(defaultKarmaConfig, options.karmaConfig),
-    jsBeautifyConfig = _.assign(defaultJSBeautifyConfig, options.jsBeautifyConfig),
+  var jsBeautifyConfig = _.assign(defaultJSBeautifyConfig, options.jsBeautifyConfig),
     jsHintConfig = _.assign(defaultJSHintConfig, options.jsHintConfig),
     recessConfig = _.assign(defaultRecessConfig, options.recessConfig),
     connectConfig = _.assign(defaultConnectConfig, options.connectConfig),
     pkg = options.pkg || {},
     name = options.name || pkg.name || 'seed',
-    jsSrcDir = './src/js',
-    cssSrcDir = './src/css',
+    jsSrcDir = './src',
+    cssSrcDir = './src',
     buildDir = './build',
     distDir = './dist',
     devDir = './dev',
@@ -74,7 +77,7 @@ module.exports = function(gulp, options){
     }
   }
 
-  var linterFailsBuild = true;
+  var continuous = false;
     
   //*******************//
   // Convenience Tasks //
@@ -120,7 +123,7 @@ module.exports = function(gulp, options){
   // execute testing and linting tasks. Also starts a connect server which
   // reloads connected browsers whenever example or build dir changes contents.
   gulp.task('dev', ['example'], function() {
-    linterFailsBuild = false;
+    continuous = true;
     
     gulp.watch([
       jsSrcDir + '/**/*.js',
@@ -131,13 +134,13 @@ module.exports = function(gulp, options){
       jsSrcDir + '/**/*.js',
       devDir + '/**/*.js',
       'gulpfile.js'
-    ], ['js-lint']);
+    ], ['js-lint', 'test']);
 
     if(!cssDisabled){
-      gulp.watch(cssSrcDir + '/**/*.js', ['css', 'lint-css']);
+      gulp.watch(cssSrcDir + '/**/*.css', ['css', 'lint-css']);
     }
 
-    karma.start(karmaConfig);
+    return test();
   });
 
   gulp.task('example', ['build'], function() {
@@ -230,30 +233,42 @@ module.exports = function(gulp, options){
   // Generates test coverage and code maintainabilty reports.
   gulp.task('report', ['test', 'plato']);
 
-  // Run tests found in ./test/ against the JavaScript source files using karma
-  // with the configuration defined in karmaConfig.
+  function test(done){
+    if (continuous){
+      return gulp.src([
+        jsSrcDir + '/**/*.js'
+      ]).pipe(jasmine({
+          includeStackTrace: true
+        }))
+    } else {
+      var junitReporter = new jasmineReporters.JUnitXmlReporter({
+          savePath: 'reports/junit',
+          consolidateAll: false
+      });
+
+      gulp.src([
+        jsSrcDir + '/**/*.js',
+        '!' + jsSrcDir + '/**/*Spec.js' // exclude tests
+      ]).pipe(istanbul())
+        .on('finish', function () {
+          gulp.src([
+            jsSrcDir + '/**/*.js'
+          ]).pipe(jasmine({
+              reporter: junitReporter,
+              verbose: true,
+              includeStackTrace: true
+            }))
+          .pipe(istanbul.writeReports({
+            dir: './reports/coverage',
+            reporters: [ 'lcovonly', 'text', 'json', 'html', 'cobertura' ]
+          }))
+          .on('end', done);
+      });
+    }
+  };
+
   gulp.task('test', function(done) {
-    var preprocessors = karmaConfig.preprocessors || {},
-      reporters = karmaConfig.reporters || [];
-
-    Object.keys(preprocessors).forEach(function(key){
-      preprocessors[key].push('coverage');
-    });
-
-    reporters.push('coverage');
-
-    var config = _.assign(
-      {},
-      karmaConfig, 
-      { 
-        singleRun: true,
-        autoWatch: false,
-        preprocessors: preprocessors,
-        reporters: reporters
-      }
-    );
-
-    karma.start(config, done);
+    return test(done);
   });
 
   // Generates a maintainability report using Plato.
@@ -288,7 +303,7 @@ module.exports = function(gulp, options){
       .pipe(jshint(jsHintConfig))
       .pipe(jshint.reporter(jsStylish));
 
-    if (linterFailsBuild){
+    if (!continuous){
       pipe = pipe.pipe(jshint.reporter('fail'));
     }
 
