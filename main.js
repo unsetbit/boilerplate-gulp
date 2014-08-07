@@ -154,7 +154,7 @@ module.exports = function(gulp, options){
 
   // Creates a clean, full build with testing, linting, reporting and
   // minification then copies the results to the dist folder.
-  gulp.task('dist', ['clean', 'test', 'lint', 'report', 'build-min'], 
+  gulp.task('dist', ['test', 'lint', 'report', 'build-min'], 
     function() {
     return gulp.src(buildDir + '/**/*')
       .pipe(gulp.dest(distDir));
@@ -165,7 +165,7 @@ module.exports = function(gulp, options){
   //*************************//
   // Generates a JavaScript bundle of jsMain and its dependencies using
   // browserify in the build directory with an embedded sourcemap.
-  gulp.task('js', ['clean-js'], function() {
+  gulp.task('js', ['clean-build'], function() {
     return browserify(jsMain)
       .bundle({
         debug: true,
@@ -178,19 +178,13 @@ module.exports = function(gulp, options){
 
   // Generates a minified JavaScript bundle in the build directory with an
   // accompanying source map file.
-  gulp.task('js-min', ['js'], function() {
+  gulp.task('js-min', ['js', 'clean-dist'], function() {
     return gulp.src(buildDir + '/' + name + '.js')
       .pipe(sourcemaps.init())
       .pipe(uglify())
       .pipe(rename(name + '.min.js'))
       .pipe(sourcemaps.write('./'))
       .pipe(gulp.dest(buildDir));
-  });
-
-  // Deletes generated JavaScript files (and source maps) from the build
-  // directory.
-  gulp.task('clean-js', function(done) {
-    del([buildDir + '/**/*.js{,.map}'], done);
   });
 
 
@@ -205,7 +199,7 @@ module.exports = function(gulp, options){
 
   // Generates a CSS bundle of cssMain and its dependencies using LESS
   // in the build directory with an embedded source map.
-  gulp.task('css', ['clean-css'], function() {
+  gulp.task('css', ['clean-build'], function() {
     return gulp.src(cssMain)
       .pipe(sourcemaps.init())
       .pipe(less())
@@ -216,7 +210,7 @@ module.exports = function(gulp, options){
 
   // Generates a minified CSS bundle in the build directory with an accompanying
   // source map.
-  gulp.task('css-min', ['css'], function() {
+  gulp.task('css-min', ['css', 'clean-dist'], function() {
     return gulp.src(buildDir + '/' + name + '.css')
       .pipe(rename(name + '.min.css'))
       .pipe(sourcemaps.init())
@@ -276,7 +270,7 @@ module.exports = function(gulp, options){
     return gulp.src([
       jsSrcDir + '/**/*.js',
       '!' + jsSrcDir + '/**/*Spec.js' // exclude tests
-    ]).pipe(plato('reports/plato', { 
+    ]).pipe(plato('./reports/plato', { 
         jshint: {
           options: jsHintConfig
         }
