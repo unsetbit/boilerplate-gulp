@@ -272,7 +272,7 @@ module.exports = function(gulp, options){
   });
 
   // Generates a maintainability report using Plato.
-  gulp.task('plato', ['clean-reports'], function(done){
+  gulp.task('plato', function(done){
     return gulp.src([
       jsSrcDir + '/**/*.js',
       '!' + jsSrcDir + '/**/*Spec.js' // exclude tests
