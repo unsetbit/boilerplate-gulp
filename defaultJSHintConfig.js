@@ -59,6 +59,9 @@ module.exports = {
   // Suppress warnings about == null comparisons.
   eqnull: true,
 
+  // We're futuristic!
+  esnext: true,
+
   globals: {
     // Jasmine Globals
     jasmine: true,
