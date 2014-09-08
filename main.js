@@ -1,84 +1,101 @@
 'use strict';
 
-var source = require('vinyl-source-stream'),
-  sourcemaps = require('gulp-sourcemaps'),
-  browserify = require('browserify'),
+// Utilities  
+var  _ = require('lodash'),
+  parseArgs = require('minimist'),
+  gutil = require('gulp-util'),
+  es = require('event-stream'),
+  watch = require('gulp-watch'),
+  fs = require('fs'),
+  path = require('path'),
+  del = require('del'),
+  glob = require('glob'),
+  source = require('vinyl-source-stream');
+
+// Gulp Plugins
+var sourcemaps = require('gulp-sourcemaps'),
   uglify = require('gulp-uglify'),
+  concat = require('gulp-concat'),
   rename = require('gulp-rename'),
   less = require('gulp-less'),
   csso = require('gulp-csso'),
   jshint = require('gulp-jshint'),
   beautify = require('js-beautify'),
-  del = require('del'),
   recess = require('gulp-recess'),
-  
-  jasmine = require('gulp-jasmine'),
-  istanbul = require('gulp-istanbul'),
-  
-  jasmineReporters = require('jasmine-reporters'),
-
-  _ = require('lodash'),
   plato = require('gulp-plato'),
-  gutil = require('gulp-util'),
-  es = require('event-stream'),
-  fs = require('fs'),
-  connect = require('gulp-connect'),
-  watch = require('gulp-watch'),
-  path = require('path'),
+  connect = require('gulp-connect');
+
+// Components without existing gulp plugins
+var  browserify = require('browserify'),
+  karma = require('karma').server,
   jsStylish = require('jshint-stylish');
 
-var defaultJSBeautifyConfig = require('./defaultJSBeautifyConfig'),
-  defaultJSHintConfig = require('./defaultJSHintConfig'),
-  defaultConnectConfig = require('./defaultConnectConfig'),
-  defaultRecessConfig = require('./defaultRecessConfig');
-
 module.exports = function(gulp, options){
+  //***************//
+  // Configuration //
+  //***************//
+  
   options = options || {};
 
-  // Generate configuration by taking defaults and applying the optional overrides
-  // on top of them.
-  var jsBeautifyConfig = _.assign(defaultJSBeautifyConfig, options.jsBeautifyConfig),
-    jsHintConfig = _.assign(defaultJSHintConfig, options.jsHintConfig),
-    recessConfig = _.assign(defaultRecessConfig, options.recessConfig),
-    connectConfig = _.assign(defaultConnectConfig, options.connectConfig),
-    pkg = options.pkg || {},
-    name = options.name || pkg.name || 'seed',
-    jsSrcDir = './src',
-    cssSrcDir = './src',
-    buildDir = './build',
-    distDir = './dist',
-    devDir = './dev',
-    reportsDir = './reports',
-    jsMain = jsSrcDir + '/' + name + '.js',
-    cssMain = cssSrcDir + '/' + name + '.less',
-    cssDisabled = !!options.disableCss;
+  var pkg = {};
+  if(options.pkg !== undefined) pkg = options.pkg;
 
-  if(options.jsMain !== undefined) jsMain = options.jsMain;
-  if(options.cssMain !== undefined) cssMain = options.cssMain;
+  // This will be used to name the generated files (<name>.js and <name>.css)
+  var name = pkg.name;
+  if(options.name !== undefined) name = options.name;
 
-  if(pkg.directories){
-    if(pkg.directories.buildDir) buildDir = pkg.directories.build;
-    if(pkg.directories.distDir) distDir = pkg.directories.dist;
-    if(pkg.directories.reportsDir) reportsDir = pkg.directories.reports;
-    if(pkg.directories.devDir) devDir = pkg.directories.dev;
+  // SOURCE DIRECTORIES
+  // JavaScript source code and unit tests.
+  var jsSrc = './src/**/*.js';
+  if(options.jsSrc !== undefined) jsSrc = options.jsSrc;
 
-    if(!options.jsMain && pkg.main) jsMain = pkg.main;
-    
-    if(pkg.directories.jsSrc !== undefined){
-      jsSrcDir = pkg.directories.jsSrc;
+  var unitTests = './src/**/*Spec.js';
+  if(options.unitTests !== undefined) unitTests = options.unitTests; 
 
-      if(!options.jsMain && !pkg.main) jsMain = jsSrcDir + '/' + name + '.js';
-    }
+  // CSS source code.
+  var cssSrc = './src/**/*.less';
+  if(options.cssSrc !== undefined) cssSrc = options.cssSrc;
 
-    if(pkg.directories.cssSrc !== undefined){
-      cssSrcDir = pkg.directories.cssSrc;
-
-      if(!options.cssMain) cssMain = cssSrcDir + '/' + name + '.less';
-    }
+  // ENTRY POINTS
+  var jsMain = './src/main.js';
+  var name = 'app';
+  if(options.jsMain !== undefined){
+    jsMain = options.jsMain;
+    name = path.basename(jsMain, '.js');
   }
 
-  var continuous = false;
-    
+  if(options.name !== undefined) name = options.name;
+
+  var cssMain;
+  if(options.cssMain !== undefined) cssMain = options.cssMain;
+
+  var cssDisabled = false;
+  if(cssMain === undefined) cssDisabled = true;
+
+  // GENERATED DIRECTORIES
+  var buildDir = './build';
+  if(options.buildDir !== undefined) buildDir = options.buildDir;
+
+  var distDir = './dist';
+  if(options.distDir !== undefined) distDir = options.distDir;
+
+  var reportsDir = './reports';
+  if(options.reportsDir !== undefined) reportsDir = options.reportsDir;
+
+  // DEFAULT COMPONENT CONFIGURATIONS
+  var jsBeautifyConfig = _.merge(require('./defaultJSBeautifyConfig'), options.jsBeautifyConfig);
+  var jsHintConfig = _.merge(require('./defaultJSHintConfig'), options.jsHintConfig);
+  var recessConfig = _.merge(require('./defaultRecessConfig'), options.recessConfig);
+  var connectConfig = _.merge(require('./defaultConnectConfig'), options.connectConfig);
+  var karmaConfig = _.merge(require('./defaultKarmaConfig'), options.karmaConfig);
+
+
+  //*****************//
+  // Local Variables //
+  //*****************//
+  var continuous = (process.argv.indexOf('dev') !== -1);
+  var args = parseArgs(process.argv.slice(2));
+
   //*******************//
   // Convenience Tasks //
   //*******************//
@@ -96,7 +113,7 @@ module.exports = function(gulp, options){
   // Builds minified versions of the CSS and JavaScript files with external
   // source maps.
   var buildMinTasks = ['js-min'];
-  if(!cssDisabled) buildTasks.push('css-min');
+  if(!cssDisabled) buildMinTasks.push('css-min');
   
   gulp.task('build-min', buildMinTasks);
 
@@ -123,29 +140,53 @@ module.exports = function(gulp, options){
   // execute testing and linting tasks. Also starts a connect server which
   // reloads connected browsers whenever example or build dir changes contents.
   gulp.task('dev', ['example'], function() {
-    continuous = true;
-    
     gulp.watch([
-      jsSrcDir + '/**/*.js',
-      '!' + jsSrcDir + '/**/*Spec.js'
+      jsSrc,
+      '!' + unitTests
     ], ['js']);
 
     gulp.watch([
-      jsSrcDir + '/**/*.js',
-      devDir + '/**/*.js',
+      jsSrc,
       'gulpfile.js'
-    ], ['js-lint', 'test']);
+    ], ['js-lint']);
 
     if(!cssDisabled){
-      gulp.watch(cssSrcDir + '/**/*.css', ['css', 'lint-css']);
+      gulp.watch(cssSrc, ['css', 'css-lint']);
     }
 
-    return test();
+    var config = _.assign({},
+      karmaConfig,
+      {
+        singleRun: false,
+        autoWatch: true,
+      });
+
+    if(!config.files) config.files = [];
+    
+    config.files = config.files.concat([
+      jsSrc,
+      unitTests
+    ]);
+    
+    karma.start(config);
   });
 
-  gulp.task('example', ['build'], function() {
-    connect.server(connectConfig);
+  gulp.task('server', ['build'], function(){
+    if(continuous){ 
+      connectConfig.livereload = true;
+    } else {
+      connectConfig.port = 3001;
+    }
 
+    if(args.port){ 
+      connectConfig.port = args.port;
+      connectConfig.livereload = { port: parseInt(args.port, 10) + 1 };
+    }
+
+    connect.server(connectConfig);
+  });
+
+  gulp.task('example', ['server'], function() {
     watch({
       glob: connectConfig.root.map(function(dir){ return dir + '/**/*'; })
     }).pipe(connect.reload());
@@ -154,25 +195,41 @@ module.exports = function(gulp, options){
 
   // Creates a clean, full build with testing, linting, reporting and
   // minification then copies the results to the dist folder.
-  gulp.task('dist', ['test', 'lint', 'report', 'build-min'], 
+  gulp.task('dist', ['test', 'lint', 'reports', 'build-min'], 
     function() {
-    return gulp.src(buildDir + '/**/*')
+    return gulp.src([
+        buildDir + '/**/*',
+      ])
       .pipe(gulp.dest(distDir));
   });
 
   //*************************//
   // JavaScript Bundler Tasks //
   //*************************//
+
+  // Deletes generated JS files (and source maps) from the build directory.
+  gulp.task('clean-js', function(cb) {
+    del([buildDir + '/**/*.js{,map}'], cb);
+  });
+
   // Generates a JavaScript bundle of jsMain and its dependencies using
   // browserify in the build directory with an embedded sourcemap.
-  gulp.task('js', ['clean-build'], function() {
+  gulp.task('js-scripts', ['clean-js'], function(){
     return browserify(jsMain)
       .bundle({
         debug: true,
         standalone: name
-      }) // Debug enables source maps
+      })
       .pipe(source(path.basename(jsMain))) // gulpifies the browserify stream
       .pipe(rename(name + '.js'))
+      .pipe(gulp.dest(buildDir));
+  });
+
+  gulp.task('js', ['js-scripts'], function() {
+    return gulp.src([buildDir + '/' + name + '.js'])
+      .pipe(sourcemaps.init())
+      .pipe(concat(name + '.js'))
+      .pipe(sourcemaps.write())
       .pipe(gulp.dest(buildDir));
   });
 
@@ -199,7 +256,7 @@ module.exports = function(gulp, options){
 
   // Generates a CSS bundle of cssMain and its dependencies using LESS
   // in the build directory with an embedded source map.
-  gulp.task('css', ['clean-build'], function() {
+  gulp.task('css', ['clean-css'], function() {
     return gulp.src(cssMain)
       .pipe(sourcemaps.init())
       .pipe(less())
@@ -221,56 +278,38 @@ module.exports = function(gulp, options){
 
 
   //*******************//
-  // Quality Ensurance //
+  // Quality Assurance //
   //*******************//
 
   // Generates test coverage and code maintainabilty reports.
-  gulp.task('report', ['test', 'plato']);
+  gulp.task('reports', ['test', 'plato']);
 
-  function test(done){
-    if (continuous){
-      return gulp.src([
-        jsSrcDir + '/**/*.js'
-      ]).pipe(jasmine({
-          includeStackTrace: true
-        }))
-    } else {
-      var junitReporter = new jasmineReporters.JUnitXmlReporter({
-          savePath: 'reports/junit',
-          consolidateAll: false
+  gulp.task('test', ['unit-test']);
+
+  gulp.task('unit-test', ['js'], function(done){
+    var config = _.assign({},
+      karmaConfig,
+      {
+        singleRun: true,
+        autoWatch: false,
       });
+    if(!config.files) config.files = [];
+    config.files = config.files.concat([
+      jsSrc,
+      unitTests
+    ]);
 
-      gulp.src([
-        jsSrcDir + '/**/*.js',
-        '!' + jsSrcDir + '/**/*Spec.js' // exclude tests
-      ]).pipe(istanbul())
-        .on('finish', function () {
-          gulp.src([
-            jsSrcDir + '/**/*.js'
-          ]).pipe(jasmine({
-              reporter: junitReporter,
-              verbose: true,
-              includeStackTrace: true
-            }))
-          .pipe(istanbul.writeReports({
-            dir: './reports/coverage',
-            reporters: [ 'lcovonly', 'text', 'json', 'html', 'cobertura' ]
-          }))
-          .on('end', done);
-      });
-    }
-  };
+    config.coverageReporter.reporters.push({ type: 'text', dir: 'reports/test/unit/coverage' });
 
-  gulp.task('test', function(done) {
-    return test(done);
+    karma.start(config, done);
   });
 
   // Generates a maintainability report using Plato.
   gulp.task('plato', function(done){
     return gulp.src([
-      jsSrcDir + '/**/*.js',
-      '!' + jsSrcDir + '/**/*Spec.js' // exclude tests
-    ]).pipe(plato('./reports/plato', { 
+      jsSrc,
+      '!' + unitTests // exclude tests
+    ]).pipe(plato(reportsDir + '/plato', { 
         jshint: {
           options: jsHintConfig
         }
@@ -290,8 +329,8 @@ module.exports = function(gulp, options){
     var config = jsHintConfig;
 
     var pipe = gulp.src([
-        jsSrcDir + '/**/*.js',
-        devDir + '/**/*.js',
+        jsSrc,
+        unitTests,
         'gulpfile.js'
       ])
       .pipe(jshint(jsHintConfig))
@@ -307,7 +346,7 @@ module.exports = function(gulp, options){
   // Runs the LESS source files via recess according to the options set in
   // recessConfig.
   gulp.task('css-lint', function() {
-    return gulp.src(cssSrcDir + '/**/*.less')
+    return gulp.src(cssSrc)
       .pipe(recess(recessConfig));
   });
 
@@ -315,8 +354,8 @@ module.exports = function(gulp, options){
   // Beautifier with the options in jsBeautifyConfig
   gulp.task('fix-style', function() {
     return gulp.src([
-        jsSrcDir + '/**/*.js',
-        devDir + '/**/*.js',
+        jsSrc,
+        unitTests,
         'gulpfile.js'
       ])
       .pipe(es.map(function(file, cb) {
