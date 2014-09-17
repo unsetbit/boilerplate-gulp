@@ -2,6 +2,8 @@
 
 > All the things you would want in a build system for client-side JavaScript projects in one package.
 
+(Building angular modules? Then you'll find this more useful: [boilerplate-gulp-angular](https://github.com/oztu/boilerplate-gulp-angular))
+
 # Capabilities
 * Compiles JavaScript CommonJS modules into a single file ([browserify](http://browserify.org/)) which can be loaded directly in a browser, via CommonJS loader, or a AMD loader. Produces both an unminified version and a minified version with  source maps.
 * Compiles [LESS](http://lesscss.org/) files into a single CSS file. Produces both an unminified version and a minified version with a source maps.
