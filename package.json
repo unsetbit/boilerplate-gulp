@@ -36,7 +36,7 @@
     "gulp-csso": "^0.2.9",
     "gulp-plato": "^1.0.0",
     "karma": "^0.12.21",
-    "karma-jasmine": "^0.1.5",
+    "karma-jasmine": "^0.2.2",
     "karma-sourcemap-loader": "^0.2.0",
     "karma-coverage": "^0.2.6",
     "karma-commonjs": "0.0.11",
