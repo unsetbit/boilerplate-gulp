@@ -8,11 +8,11 @@
 ```sh
 # Lints, compiles, prefixes, test, and minifies JS and LESS files
 # and puts the artifacts in the ./build directory
-gulp bpcss:build
+gulp bp:build
 
 # Watches source files and rebuilds when they are modified and starts a server
 # on port 8080 which serves ./build and ./example directories
-gulp bpcss:dev
+gulp bp:dev
 
 ```
 
