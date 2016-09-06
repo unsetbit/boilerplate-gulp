@@ -31,7 +31,7 @@ boilerplate(gulp, {
   connect: {
     // The root directories to serve using the development server
     root: ['./example', './build']
-  }
+  },
 
   js: {
     // The entry point of the CommonJS module
